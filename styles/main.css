@@ -1,0 +1,82 @@
+@import './reset.css';
+
+:root {
+  --color-square-black: 125, 135, 150;
+  --color-square-white: 232, 235, 239;
+  --color-piece-black: 0, 0, 0;
+  --color-piece-white: 242, 242, 242;
+  --color-accent: 128, 0, 128
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, 12.5vh);
+  grid-auto-rows: 1fr;
+}
+
+.square {
+  align-items: center;
+  border: 1px solid rgb(var(--color-accent));
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  height: 12.5vh;
+  position: relative;
+}
+
+.square:before {
+  content: attr(coords);
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  font-size: 1em;
+  font-weight: 700;
+}
+
+.square.black {
+  background-color: rgb(var(--color-square-black));
+}
+
+.square.white {
+  background-color: rgb(var(--color-square-white));
+}
+
+.square-indicator {
+  height: 100%;
+  width: 100%;
+}
+
+.square-indicator.hovered {
+  background-color: rgba(var(--color-accent), .2)
+}
+
+.square-indicator.selected {
+  background-color: rgba(var(--color-accent), .5)
+}
+
+.square-indicator.possible {
+  background-color: rgba(200, 0, 50,.5);
+}
+
+.piece {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  font-weight: 700;
+  font-size: 10vh;
+  height: 100%;
+  justify-content: center;
+  -webkit-text-stroke: 1px rgb(var(--color-accent));
+  width: 100%;
+  -moz-user-select: none;
+  user-select: none;
+  cursor: pointer;
+}
+
+.piece.black {
+  color: rgb(var(--color-piece-black));
+}
+
+.piece.white {
+  color: rgb(var(--color-piece-white));
+}
