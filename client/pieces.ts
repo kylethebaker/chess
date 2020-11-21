@@ -1,6 +1,6 @@
-import { Coords, Grid, getFromGrid, isOutOfBounds, coordsMatch, createGrid } from './grid';
+import { coordsToOffset, Coords, Grid, getFromGrid, isOutOfBounds, coordsMatch, createGrid } from './grid';
 
-export type PieceTeam = 
+export type PieceTeam =
   | 'top'
   | 'bottom';
 
@@ -40,12 +40,13 @@ const enemyColor = (
 
 const traverseUntilStopped = (
   pieces: PiecesOnBoard,
-  startSquare: Coords, 
-  color: PieceColor, 
+  startSquare: Coords,
+  color: PieceColor,
   stepFn: (current: Coords) => Coords,
 ): Coords[] => {
   const travelled: Coords[] = []
   let prev = startSquare;
+
   while (true) {
     const current = stepFn(prev);
 
@@ -55,24 +56,122 @@ const traverseUntilStopped = (
 
     const piece = getFromGrid(pieces, current);
 
+    // Empty square, good to land on
     if (!piece) {
       travelled.push(current);
-    } else if (piece.color === enemyColor(color)) {
+    }
+    // Enemy square, we can land here but can't keep going
+    else if (piece.color === enemyColor(color)) {
       travelled.push(current);
       break;
-    } else if (piece.color === color) {
+    }
+    // Friendly square, nowhere else to go
+    else if (piece.color === color) {
       break;
     }
 
     prev = current;
   }
+
   return travelled;
 };
 
-const movesForRook: MoveFn = (pieces, [x, y], color, team) => {
-  return createGrid(([x, y]) => {
+const createMoveValidator = (
+  pieces: PiecesOnBoard,
+  color: PieceColor,
+  moves: Coords[]
+) => {
+  const movesSet = new Set(moves
+    .filter(xy => !isOutOfBounds(xy))
+    .map(coordsToOffset)
+  );
+  return (coords: Coords) => (
+    movesSet.has(coordsToOffset(coords))
+    && !isOutOfBounds(coords)
+    && (
+      !getFromGrid(pieces, coords)
+      || getFromGrid(pieces, coords)?.color === enemyColor(color)
+    )
+  )
+}
 
-  })
+const movesForRook: MoveFn = (pieces, square, color) => {
+  const traverse = (fn: (c: Coords) => Coords) => (
+    traverseUntilStopped(pieces, square, color, fn)
+  );
+
+  const isValidMove = createMoveValidator(pieces, color, [
+    ...traverse(([x, y]) => ([x, y - 1])), // Up
+    ...traverse(([x, y]) => ([x, y + 1])), // Down
+    ...traverse(([x, y]) => ([x - 1, y])), // Left
+    ...traverse(([x, y]) => ([x + 1, y])), // Right
+  ]);
+
+  return createGrid(isValidMove);
+}
+
+const movesForBishop: MoveFn = (pieces, square, color) => {
+  const traverse = (fn: (c: Coords) => Coords) => (
+    traverseUntilStopped(pieces, square, color, fn)
+  );
+
+  const isValidMove = createMoveValidator(pieces, color, [
+    ...traverse(([x, y]) => ([x - 1, y - 1])), // Up left
+    ...traverse(([x, y]) => ([x + 1, y - 1])), // Up right
+    ...traverse(([x, y]) => ([x - 1, y + 1])), // Down left
+    ...traverse(([x, y]) => ([x + 1, y + 1])), // Down right
+  ]);
+
+  return createGrid(isValidMove);
+}
+
+const movesForQueen: MoveFn = (pieces, square, color) => {
+  const traverse = (fn: (c: Coords) => Coords) => (
+    traverseUntilStopped(pieces, square, color, fn)
+  );
+
+  const isValidMove = createMoveValidator(pieces, color, [
+    ...traverse(([x, y]) => ([x, y - 1])), // Up
+    ...traverse(([x, y]) => ([x, y + 1])), // Down
+    ...traverse(([x, y]) => ([x - 1, y])), // Left
+    ...traverse(([x, y]) => ([x + 1, y])), // Right
+    ...traverse(([x, y]) => ([x - 1, y - 1])), // Up left
+    ...traverse(([x, y]) => ([x + 1, y - 1])), // Up right
+    ...traverse(([x, y]) => ([x - 1, y + 1])), // Down left
+    ...traverse(([x, y]) => ([x + 1, y + 1])), // Down right
+  ]);
+
+  return createGrid(isValidMove);
+}
+
+const movesForKnight: MoveFn = (pieces, [x, y], color) => {
+  const isValidMove = createMoveValidator(pieces, color, [
+    [x - 1, y - 2],
+    [x + 1, y - 2],
+    [x - 2, y - 1],
+    [x + 2, y - 1],
+    [x - 1, y + 2],
+    [x + 1, y + 2],
+    [x - 2, y + 1],
+    [x + 2, y + 1],
+  ]);
+
+  return createGrid(isValidMove);
+}
+
+const movesForKing: MoveFn = (pieces, [x, y], color) => {
+  const isValidMove = createMoveValidator(pieces, color, [
+    [x, y - 1],
+    [x, y + 1],
+    [x - 1, y],
+    [x + 1, y],
+    [x - 1, y - 1],
+    [x + 1, y - 1],
+    [x - 1, y + 1],
+    [x + 1, y + 1],
+  ]);
+
+  return createGrid(isValidMove);
 }
 
 const movesForPawn: MoveFn = (pieces, [x, y], color, team) => {
@@ -113,10 +212,10 @@ const movesForPawn: MoveFn = (pieces, [x, y], color, team) => {
 const pieceMoves: Record<PieceType, MoveFn> = {
   pawn: movesForPawn,
   rook: movesForRook,
-  bishop: (() => null) as any,
-  knight: (() => null) as any,
-  king: (() => null) as any,
-  queen: (() => null) as any,
+  bishop: movesForBishop,
+  knight: movesForKnight,
+  king: movesForKing,
+  queen: movesForQueen,
 };
 
 export function movesForPiece(

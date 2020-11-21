@@ -33,10 +33,10 @@ export function coordsMatch(a: Coords | null, b: Coords | null): boolean {
 }
 
 export function offsetToCoords(n: number): [number, number] {
-  return [Math.floor(8 / n), n % 8]
+  return [n % 8, Math.floor(n / 8)]
 }
 
-export function coordsToOffset(x: number, y: number): number {
+export function coordsToOffset([x, y]: Coords): number {
   return (8 * y + x)
 }
 
@@ -45,7 +45,7 @@ export function flattenGrid<T>(grid: Grid<T>): T[] {
 }
 
 export function expandToGrid<T>(flat: T[]) {
-  return createGrid(([x, y]) => flat[coordsToOffset(x, y)]);
+  return createGrid(coords => flat[coordsToOffset(coords)]);
 }
 
 export function mapGrid<X, Y>(grid: Grid<X>, fn: (x: X) => Y): Grid<Y> {

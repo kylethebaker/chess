@@ -56,11 +56,24 @@ export const selectSquare: Thunk = (square: Coords) => (dispatch, getState) => {
       dispatch(setPossibleMoves(possibleMoves));
     }
   } else {
+    // The selection is no longer valid after doing a second click
+    dispatch(setSquareSelected(null));
+    dispatch(setPossibleMoves(null));
+
+    // @TODO: this works for both 'take' and 'move', but 'take' should probably
+    // be more special (score, track taken pieces, etc)
     if (possibleMoves && getFromGrid(possibleMoves, square)) {
       dispatch(movePiece({ from: existingSelection, to: square }))
     }
-    dispatch(setSquareSelected(null));
-    dispatch(setPossibleMoves(null));
+    // If we're jumping from selecting one piece to another of the same color
+    // then switch the selection instead of cancelling. This will recurse but
+    // we've already cleared out the selection so it shouldn't be infinite
+    else if (
+      piece?.color === getFromGrid(pieces, existingSelection)?.color
+      && !coordsMatch(square, existingSelection)
+    ) {
+      dispatch(selectSquare(square));
+    }
   }
 };
 
