@@ -1,82 +1,38 @@
 @import './reset.css';
+@import './board.css';
 
 :root {
-  --color-square-black: 125, 135, 150;
-  --color-square-white: 232, 235, 239;
-  --color-piece-black: 0, 0, 0;
+  --color-background: 34, 34, 59;
+  --color-square-black: 154, 140, 152;
+  --color-square-white: 242, 233, 228;
+  --color-piece-black: 0, 20, 45;
   --color-piece-white: 242, 242, 242;
-  --color-accent: 128, 0, 128
+  --color-square-possible: 220, 116, 138;
+  --color-square-selected: 94, 93, 116;
+  --color-accent: 74, 78, 105;
+  --square-size: 100px;
 }
 
-.board {
-  display: grid;
-  grid-template-columns: repeat(8, 12.5vh);
-  grid-auto-rows: 1fr;
+body {
+  background: radial-gradient(circle, rgb(79, 79, 131) 0%, rgb(var(--color-background)) 90%)
 }
 
-.square {
-  align-items: center;
-  border: 1px solid rgb(var(--color-accent));
-  box-sizing: border-box;
+.wrapper {
   display: flex;
-  justify-content: center;
-  height: 12.5vh;
-  position: relative;
-}
-
-.square:before {
-  content: attr(coords);
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  font-size: 1em;
-  font-weight: 700;
-}
-
-.square.black {
-  background-color: rgb(var(--color-square-black));
-}
-
-.square.white {
-  background-color: rgb(var(--color-square-white));
-}
-
-.square-indicator {
-  height: 100%;
-  width: 100%;
-}
-
-.square-indicator.hovered {
-  background-color: rgba(var(--color-accent), .2)
-}
-
-.square-indicator.selected {
-  background-color: rgba(var(--color-accent), .5)
-}
-
-.square-indicator.possible {
-  background-color: rgba(200, 0, 50,.5);
-}
-
-.piece {
+  flex-direction: column;
   align-items: center;
-  box-sizing: border-box;
-  display: flex;
-  font-weight: 700;
-  font-size: 10vh;
-  height: 100%;
   justify-content: center;
-  -webkit-text-stroke: 1px rgb(var(--color-accent));
-  width: 100%;
-  -moz-user-select: none;
-  user-select: none;
-  cursor: pointer;
 }
 
-.piece.black {
-  color: rgb(var(--color-piece-black));
+.info-bar-section {
+  display: flex;
+  padding: .5em;
+  color: white;
+  font-weight: 700;
+  font-size: 1.2em;
+  text-shadow: 1px 1px 1px rbga(0, 0, 0, .75);
+  font-family: sans-serif;
 }
 
-.piece.white {
-  color: rgb(var(--color-piece-white));
+.board-section {
 }

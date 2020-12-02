@@ -1,7 +1,8 @@
 import { nothing, html, TemplateResult } from 'lit-html';
+import { classMap } from 'lit-html/directives/class-map';
 import { getFromGrid, coordsMatch, createGrid, squareColor, Coords } from './grid';
 import { Piece, PieceType } from './pieces';
-import { Store, getSelectedSquare, getPieces, selectSquare, getHoveredSquare, hoverSquare, getPossibleMoves } from './state';
+import { getTurnColor, Store, getSelectedSquare, getPieces, selectSquare, getHoveredSquare, hoverSquare, getPossibleMoves } from './state';
 
 const pieceGlyphs: Record<PieceType, string> = {
   king: '♚',
@@ -13,54 +14,66 @@ const pieceGlyphs: Record<PieceType, string> = {
 } as const;
 
 export function rootTemplate(store: Store) {
+  return html`
+    <div class="wrapper">
+      <section class="info-bar-section">
+        ${infoTemplate(store)}
+      </section>
+      <section class="board-section">
+        ${boardTemplate(store)}
+      </section>
+    </div>
+  `;
+}
+
+export function infoTemplate(store: Store) {
+  const turnColor = getTurnColor(store.getState());
+  return html`
+    <div>${turnColor === 'white' ? 'White' : 'Black'}'s turn</div>
+  `;
+}
+
+export function boardTemplate(store: Store) {
   const pieces = getPieces(store.getState());
   const selected = getSelectedSquare(store.getState());
   const hovered = getHoveredSquare(store.getState());
   const possibleMoves = getPossibleMoves(store.getState());
+  const turnColor = getTurnColor(store.getState());
 
   const squares = createGrid(([x, y]) => {
     const piece = getFromGrid(pieces, [x, y]);
-    return squareTemplate({
-      pieceEl: piece ? pieceTemplate(piece) : null,
-      color: squareColor(x, y),
-      isSelected: coordsMatch([x, y], selected),
-      isHovered: coordsMatch([x, y], hovered),
-      isPossibleMove: !!possibleMoves && getFromGrid(possibleMoves, [x, y]),
-      onClick: () => store.dispatch(selectSquare([x, y])),
-      //onHover: () => store.dispatch(hoverSquare([x, y])),
-      onHover: () => undefined,
-      coords: [x, y]
+    const onClick = () => store.dispatch(selectSquare([x, y]));
+    // const onHover =  () => store.dispatch(hoverSquare([x, y]));
+    const onHover = () => undefined;
+    const indicatorClasses = classMap({
+      'square-indicator': true,
+      selected: coordsMatch([x, y], selected),
+      hovered: coordsMatch([x, y], hovered),
+      possible: !!possibleMoves && getFromGrid(possibleMoves, [x, y]),
     });
-  });
-
-  return html`<div class="board">${squares}</div>`;
-}
-
-interface SquareOptions {
-  coords: Coords,
-  color: 'black' | 'white';
-  pieceEl: TemplateResult | null;
-  isSelected: boolean;
-  isHovered: boolean;
-  isPossibleMove: boolean;
-  onClick: () => void;
-  onHover: () => void;
-}
-
-export function squareTemplate(opts: SquareOptions) {
-  const selected = opts.isSelected ? 'selected' : '';
-  const hovered = opts.isHovered ? 'hovered' : '';
-  const possible = opts.isPossibleMove ? 'possible' : '';
-  return html`
+    return html`
       <div
-        coords="[${opts.coords[0]}, ${opts.coords[1]}]"
-        class="square ${opts.color}"
-        @mouseover="${opts.onHover}"
-        @click="${opts.onClick}">
-          <div class="square-indicator ${selected} ${hovered} ${possible}">
-            ${opts.pieceEl ?? nothing}
+        coords="[${x}, ${y}]"
+        class="square ${squareColor(x, y)}"
+        @mouseover="${onHover}"
+        @click="${onClick}">
+          <div class="${indicatorClasses}">
+            ${piece ? pieceTemplate(piece) : nothing}
           </div>
       </div>`;
+  });
+
+  const boardClasses = classMap({
+    board: true,
+    'blacks-turn': turnColor === 'black',
+    'whites-turn': turnColor === 'white',
+    'no-selection': selected === null
+  });
+
+  return html`
+    <div class="${boardClasses}">
+      ${squares}
+    </div>`;
 }
 
 export function pieceTemplate({ type, color }: Piece) {

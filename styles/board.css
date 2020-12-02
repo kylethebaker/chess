@@ -1,0 +1,79 @@
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, var(--square-size));
+  grid-auto-rows: 1fr;
+  box-shadow: 0px 0px 10px rgba(0,0,0,.5);
+}
+
+.square {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  height: var(--square-size);
+  position: relative;
+}
+
+.square:before {
+  content: attr(coords);
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  font-size: 1em;
+  font-weight: 700;
+}
+
+.square.black {
+  background-color: rgb(var(--color-square-black));
+}
+
+.square.white {
+  background-color: rgb(var(--color-square-white));
+}
+
+.square-indicator {
+  height: 100%;
+  width: 100%;
+  border: 1px solid rgba(var(--color-accent), .5);
+}
+
+.square-indicator.hovered {
+  background-color: rgba(var(--color-accent), .2)
+}
+
+.square-indicator.selected {
+  background-color: rgb(var(--color-square-selected))
+}
+
+.square-indicator.possible {
+  background-color: rgba(var(--color-square-possible), .5);
+  border: 1px solid rgba(var(--color-square-possible), .5);
+}
+
+.square-indicator.possible,
+.board.whites-turn .piece.white,
+.board.blacks-turn .piece.black {
+  cursor: pointer;
+}
+
+.piece {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  font-weight: 700;
+  font-size: 10vh;
+  height: 100%;
+  justify-content: center;
+  -webkit-text-stroke: 1px rgba(var(--color-accent), .5);
+  width: 100%;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.piece.black {
+  color: rgb(var(--color-piece-black));
+}
+
+.piece.white {
+  color: rgb(var(--color-piece-white));
+}

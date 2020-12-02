@@ -16,6 +16,13 @@ export type PieceType =
   | 'queen'
   | 'pawn';
 
+export type MoveType =
+  | 'move'
+  | 'capture'
+  | 'castle'
+  | 'en-pessant'
+  | 'promotion'
+
 export interface Piece {
   type: PieceType;
   color: PieceColor;
@@ -38,6 +45,10 @@ const enemyColor = (
   )
 );
 
+// Creates a list of coordinates by continuously calling the `stepFn` until
+// either a coord is out of bounds or a piece already occupies the square. If
+// the piece is an enemy piece then it's square is included in the result (since
+// it could be taken)
 const traverseUntilStopped = (
   pieces: PiecesOnBoard,
   startSquare: Coords,
@@ -76,6 +87,8 @@ const traverseUntilStopped = (
   return travelled;
 };
 
+// Creates a function that will check if a coord: exists in `moves`, isn't out of
+// bounds, and isn't occupied by a friendly piece
 const createMoveValidator = (
   pieces: PiecesOnBoard,
   color: PieceColor,
@@ -95,6 +108,9 @@ const createMoveValidator = (
   )
 }
 
+//-----------------------------------------------------------------------------
+// Rook
+//-----------------------------------------------------------------------------
 const movesForRook: MoveFn = (pieces, square, color) => {
   const traverse = (fn: (c: Coords) => Coords) => (
     traverseUntilStopped(pieces, square, color, fn)
@@ -110,6 +126,9 @@ const movesForRook: MoveFn = (pieces, square, color) => {
   return createGrid(isValidMove);
 }
 
+//-----------------------------------------------------------------------------
+// Bishop
+//-----------------------------------------------------------------------------
 const movesForBishop: MoveFn = (pieces, square, color) => {
   const traverse = (fn: (c: Coords) => Coords) => (
     traverseUntilStopped(pieces, square, color, fn)
@@ -125,6 +144,9 @@ const movesForBishop: MoveFn = (pieces, square, color) => {
   return createGrid(isValidMove);
 }
 
+//-----------------------------------------------------------------------------
+// Queen
+//-----------------------------------------------------------------------------
 const movesForQueen: MoveFn = (pieces, square, color) => {
   const traverse = (fn: (c: Coords) => Coords) => (
     traverseUntilStopped(pieces, square, color, fn)
@@ -144,6 +166,9 @@ const movesForQueen: MoveFn = (pieces, square, color) => {
   return createGrid(isValidMove);
 }
 
+//-----------------------------------------------------------------------------
+// Knight
+//-----------------------------------------------------------------------------
 const movesForKnight: MoveFn = (pieces, [x, y], color) => {
   const isValidMove = createMoveValidator(pieces, color, [
     [x - 1, y - 2],
@@ -159,6 +184,9 @@ const movesForKnight: MoveFn = (pieces, [x, y], color) => {
   return createGrid(isValidMove);
 }
 
+//-----------------------------------------------------------------------------
+// King
+//-----------------------------------------------------------------------------
 const movesForKing: MoveFn = (pieces, [x, y], color) => {
   const isValidMove = createMoveValidator(pieces, color, [
     [x, y - 1],
@@ -174,6 +202,9 @@ const movesForKing: MoveFn = (pieces, [x, y], color) => {
   return createGrid(isValidMove);
 }
 
+//-----------------------------------------------------------------------------
+// Pawn
+//-----------------------------------------------------------------------------
 const movesForPawn: MoveFn = (pieces, [x, y], color, team) => {
   const moveForward: Coords = (
     (team === 'top')
@@ -189,6 +220,11 @@ const movesForPawn: MoveFn = (pieces, [x, y], color, team) => {
     (team === 'top')
       ? [x + 1, y + 1]
       : [x - 1, y - 1]
+  );
+  const firstMove: Coords = (
+    (team === 'top')
+      ? [x, y + 2]
+      : [x, y - 2]
   );
   return createGrid(square => (
     (
@@ -206,7 +242,17 @@ const movesForPawn: MoveFn = (pieces, [x, y], color, team) => {
       && !isOutOfBounds(takeRight)
       && getFromGrid(pieces, takeRight)?.color === enemyColor(color)
     )
-  ));
+    || (
+      team === 'top'
+      && y == 1
+      && coordsMatch(firstMove, square)
+    )
+    || (
+      team === 'bottom'
+      && y == 6
+      && coordsMatch(firstMove, square)
+    )
+  ))
 }
 
 const pieceMoves: Record<PieceType, MoveFn> = {
@@ -224,7 +270,9 @@ export function movesForPiece(
   team: PieceTeam,
   square: Coords
 ): Grid<boolean> {
-  return (pieceMoves[piece.type])
-    ? pieceMoves[piece.type](pieces, square, piece.color, team)
-    : createGrid(_ => false);
+  const moves = pieceMoves[piece.type](pieces, square, piece.color, team);
+  // @TODO: remove things that would put you in check
+  // @TODO: en passant https://en.wikipedia.org/wiki/En_passant
+  // @TODO: castling https://en.wikipedia.org/wiki/Castling#Requirements
+  return moves;
 }
